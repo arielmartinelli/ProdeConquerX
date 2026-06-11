@@ -37,6 +37,11 @@
   --border-radius-lg: 20px;
 }
 
+html, body {
+  overflow-x: hidden; /* Prevent horizontal scroll on body */
+  width: 100%;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -50,7 +55,6 @@ body {
   background-attachment: fixed;
   color: var(--text-dark);
   min-height: 100vh;
-  overflow-x: hidden;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
@@ -77,6 +81,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  width: 100%;
 }
 
 /* Header Navbar */
@@ -84,7 +89,8 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
+  padding: 0 2rem;
+  height: 70px; /* Locked height */
   background: var(--bg-album-cover);
   border-bottom: 3px solid var(--color-gold);
   position: sticky;
@@ -94,7 +100,7 @@ body {
 }
 
 .brand {
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   font-weight: 800;
   color: var(--text-light);
   display: flex;
@@ -484,9 +490,20 @@ body {
   margin-bottom: 2rem;
 }
 
+/* FIXED HORIZONTAL SCROLL ON DASHBOARD TABLE */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-top: 1rem;
+  border-radius: var(--border-radius-sm);
+  border: 1px solid rgba(90, 11, 33, 0.05);
+}
+
 .leaderboard-table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 600px; /* Lock min-width to force scroll instead of layout breaks */
 }
 
 .leaderboard-table th {
@@ -575,7 +592,7 @@ body {
 
 .match-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); /* Adjusted to fit smaller devices better */
   gap: 2rem;
   margin-top: 1.5rem;
   margin-bottom: 3rem;
@@ -665,15 +682,6 @@ body {
 
 .match-date {
   color: var(--text-secondary);
-}
-
-/* Custom Sticker Stamp Number */
-.match-card::after {
-  content: "N° " attr(key); /* Will show match ID as sticker number */
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  display: none; /* Handled in react with a custom span for styling flexibility */
 }
 
 .sticker-number-badge {
@@ -1108,10 +1116,10 @@ body {
   /* Hamburger Navigation Drawer Overlay */
   .nav-links {
     position: fixed;
-    top: 67px; /* directly below navbar */
+    top: 70px; /* directly below navbar */
     right: -100%;
     width: 280px;
-    height: calc(100vh - 67px);
+    height: calc(100vh - 70px);
     background: var(--bg-album-cover);
     background-image: linear-gradient(to bottom, #7d1230 0%, #3e0716 100%);
     border-left: 3px solid var(--color-gold);
@@ -1230,5 +1238,29 @@ body {
   .admin-finished-toggle, .admin-save-btn {
     flex: 1;
     max-width: 150px;
+  }
+}
+
+@media (max-width: 480px) {
+  .match-grid {
+    grid-template-columns: 1fr; /* Force 1 column on extremely small mobile screens */
+    gap: 1.5rem;
+  }
+  
+  .match-card {
+    min-width: 100%;
+  }
+
+  .navbar {
+    padding: 0 1rem;
+  }
+
+  .brand {
+    font-size: 1.25rem;
+  }
+
+  .brand span {
+    font-size: 0.75rem;
+    padding: 2px 6px;
   }
 }
