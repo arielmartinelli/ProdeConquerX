@@ -307,7 +307,10 @@ export default function MatchList({ currentUser, showToast }) {
                   <span className={`stage-badge ${m.stage}`}>
                     {m.group_name ? `Grupo ${m.group_name}` : getStageLabel(m.stage)}
                   </span>
-                  <span className="match-date">{m.match_date}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span className="match-date">{m.match_date}</span>
+                    <span className="sticker-number-badge">N° {m.id}</span>
+                  </div>
                 </div>
 
                 <div className="match-teams-row">

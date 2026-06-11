@@ -279,8 +279,9 @@ export default function AdminPanel({ currentUser, showToast }) {
             <div key={m.id} className="glass-panel admin-card">
               {/* Left Column: Team Names & Flags */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                  ID: #{m.id} | {m.group_name ? `Grupo ${m.group_name}` : getStageLabel(m.stage)} | {m.match_date}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  <span className="sticker-number-badge" style={{ background: 'var(--bg-album-cover)', color: 'white', borderColor: 'var(--bg-album-cover)' }}>N° {m.id}</span>
+                  <span>{m.group_name ? `Grupo ${m.group_name}` : getStageLabel(m.stage)} | {m.match_date}</span>
                 </div>
                 
                 {isKout ? (

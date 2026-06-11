@@ -9,6 +9,7 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [toast, setToast] = useState({ message: '', type: '', visible: false });
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // Load session from localStorage on start
   useEffect(() => {
@@ -33,6 +34,7 @@ export default function App() {
   const handleLogout = () => {
     setCurrentUser(null);
     localStorage.removeItem('prode_conquer_user');
+    setMenuOpen(false);
     showToast('Sesión cerrada correctamente.', 'success');
   };
 
@@ -76,21 +78,26 @@ export default function App() {
         <>
           {/* Header Navigation */}
           <header className="navbar">
-            <a href="#" className="brand" onClick={() => setActiveTab('dashboard')}>
+            <a href="#" className="brand" onClick={() => { setActiveTab('dashboard'); setMenuOpen(false); }}>
               Prode Conquer 🏆 <span>Mundial 2026</span>
             </a>
 
-            <nav className="nav-links">
+            {/* Hamburger Menu Toggle Button */}
+            <button className="hamburger-btn" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">
+              {menuOpen ? '✕' : '☰'}
+            </button>
+
+            <nav className={`nav-links ${menuOpen ? 'open' : ''}`}>
               <button
                 className={`nav-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
-                onClick={() => setActiveTab('dashboard')}
+                onClick={() => { setActiveTab('dashboard'); setMenuOpen(false); }}
               >
                 Tabla de Posiciones
               </button>
               
               <button
                 className={`nav-btn ${activeTab === 'matches' ? 'active' : ''}`}
-                onClick={() => setActiveTab('matches')}
+                onClick={() => { setActiveTab('matches'); setMenuOpen(false); }}
               >
                 Votar Partidos
               </button>
@@ -98,7 +105,7 @@ export default function App() {
               {currentUser.is_admin && (
                 <button
                   className={`nav-btn ${activeTab === 'admin' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('admin')}
+                  onClick={() => { setActiveTab('admin'); setMenuOpen(false); }}
                 >
                   Administración 🔧
                 </button>
@@ -106,9 +113,14 @@ export default function App() {
 
               <button
                 className={`nav-btn ${activeTab === 'profile' ? 'active' : ''}`}
-                onClick={() => setActiveTab('profile')}
+                onClick={() => { setActiveTab('profile'); setMenuOpen(false); }}
               >
                 Mi Perfil
+              </button>
+              
+              {/* Logout inside menu for mobile layout */}
+              <button className="logout-btn-mobile" onClick={handleLogout}>
+                Cerrar Sesión
               </button>
             </nav>
 
