@@ -416,7 +416,7 @@ export default function MatchList({ currentUser, showToast }) {
                     {isFinished ? (
                       getPointsBadge(m)
                     ) : m.is_locked ? (
-                      <span className="points-earned-badge none" style={{ background: '#f5f5f5', color: '#64748b', borderColor: '#cbd5e1' }}>🔒 Bloqueado por Admin</span>
+                      <span className="voting-locked-badge">🔒 Votación: OFF</span>
                     ) : (
                       <>
                         <span className={`status-indicator ${!hasScore ? 'empty' : pred.saved ? 'saved' : 'unsaved'}`}></span>

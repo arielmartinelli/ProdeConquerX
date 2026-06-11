@@ -998,23 +998,89 @@ body {
   background: var(--color-primary);
 }
 
+.admin-actions {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+
 .admin-finished-toggle {
   background: #f1f3f4;
-  border: 1px solid #cbd5e1;
+  border: 2px solid #cbd5e1;
   color: var(--text-secondary);
   font-family: inherit;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 0.75rem;
-  padding: 6px 12px;
+  padding: 8px 14px;
   border-radius: var(--border-radius-sm);
   cursor: pointer;
   text-transform: uppercase;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.admin-finished-toggle:hover {
+  filter: brightness(0.95);
+}
+
+.admin-finished-toggle.pending {
+  background: rgba(100, 116, 139, 0.08);
+  color: #64748b;
+  border-color: #cbd5e1;
 }
 
 .admin-finished-toggle.finished {
-  background: rgba(0, 128, 0, 0.1);
-  color: green;
-  border-color: green;
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  border-color: #10b981;
+}
+
+.admin-vote-toggle {
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 0.75rem;
+  padding: 8px 14px;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 2px solid;
+}
+
+.admin-vote-toggle:hover {
+  filter: brightness(0.95);
+}
+
+.admin-vote-toggle.vote-on {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  border-color: #10b981;
+}
+
+.admin-vote-toggle.vote-off {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+  border-color: #ef4444;
+}
+
+.voting-locked-badge {
+  background: rgba(100, 116, 139, 0.08);
+  color: #64748b;
+  border: 2px solid #cbd5e1;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-weight: 800;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 /* Profile / Password Change Section */
@@ -1231,13 +1297,17 @@ body {
   
   .admin-actions {
     flex-direction: row;
+    flex-wrap: wrap;
     justify-content: center;
     width: 100%;
+    gap: 0.5rem;
   }
 
-  .admin-finished-toggle, .admin-save-btn {
-    flex: 1;
-    max-width: 150px;
+  .admin-finished-toggle, .admin-vote-toggle, .admin-save-btn {
+    flex: 1 1 calc(33.33% - 0.5rem);
+    min-width: 110px;
+    text-align: center;
+    justify-content: center;
   }
 }
 

@@ -407,18 +407,17 @@ export default function AdminPanel({ currentUser, showToast }) {
               {/* Right Column: Actions */}
               <div className="admin-actions">
                 <button
-                  className={`admin-finished-toggle ${edit.status === 'finished' ? 'finished' : ''}`}
+                  className={`admin-finished-toggle ${edit.status === 'finished' ? 'finished' : 'pending'}`}
                   onClick={() => toggleFinished(m.id)}
                 >
                   {edit.status === 'finished' ? '🏁 Finalizado' : '⏳ Pendiente'}
                 </button>
 
                 <button
-                  className={`admin-finished-toggle ${edit.isLocked ? 'finished' : ''}`}
-                  style={{ borderColor: edit.isLocked ? 'var(--color-primary)' : 'var(--panel-border)', color: edit.isLocked ? 'var(--color-primary)' : '' }}
+                  className={`admin-vote-toggle ${edit.isLocked ? 'vote-off' : 'vote-on'}`}
                   onClick={() => toggleMatchLock(m.id)}
                 >
-                  {edit.isLocked ? '🔒 Bloqueado' : '🔓 Abierto'}
+                  {edit.isLocked ? '🔒 Votación: OFF' : '🔓 Votación: ON'}
                 </button>
                 
                 <button
