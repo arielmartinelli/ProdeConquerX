@@ -109,7 +109,7 @@ export default function MatchList({ currentUser, showToast }) {
     const pendingMatchIds = new Set(
       matches
         .filter(m => {
-          const lockTime = new Date(`${m.match_date.substring(0, 10)}T00:00:00-03:00`);
+          const lockTime = getLockTime(m.match_date);
           return m.status === 'pending' && new Date() < lockTime;
         })
         .map(m => m.id)
@@ -235,16 +235,44 @@ export default function MatchList({ currentUser, showToast }) {
     }
   };
 
+  const parseDate = (dateStr) => {
+    if (!dateStr) return new Date();
+    if (!dateStr.includes('T')) {
+      return new Date(dateStr.replace(/-/g, '/'));
+    }
+    return new Date(dateStr);
+  };
+
+  const getLockTime = (dateStr) => {
+    if (!dateStr) return new Date();
+    if (!dateStr.includes('T')) {
+      return new Date(`${dateStr}T00:00:00-03:00`);
+    }
+    const d = new Date(dateStr);
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      timeZone: 'America/Argentina/Buenos_Aires'
+    });
+    const datePart = formatter.format(d);
+    return new Date(`${datePart}T00:00:00-03:00`);
+  };
+
   const formatDate = (dateStr) => {
     try {
-      const d = new Date(dateStr);
-      return d.toLocaleString('es-AR', {
+      const d = parseDate(dateStr);
+      const options = {
         day: 'numeric',
         month: 'short',
-        hour: '2-digit',
-        minute: '2-digit',
         timeZone: 'America/Argentina/Buenos_Aires'
-      }) + ' hs';
+      };
+      if (dateStr.includes('T')) {
+        options.hour = '2-digit';
+        options.minute = '2-digit';
+        return d.toLocaleString('es-AR', options) + ' hs';
+      }
+      return d.toLocaleDateString('es-AR', options);
     } catch (e) {
       return dateStr;
     }
@@ -321,7 +349,7 @@ export default function MatchList({ currentUser, showToast }) {
           {filteredMatches.map(m => {
             const pred = predictions[m.id] || { home: '', away: '', saved: true };
             const isFinished = m.status === 'finished';
-            const lockTime = new Date(`${m.match_date.substring(0, 10)}T00:00:00-03:00`);
+            const lockTime = getLockTime(m.match_date);
             const hasStartedDay = new Date() >= lockTime;
             const hasScore = pred.home !== '' && pred.away !== '';
             const isLocked = isFinished || hasStartedDay || (pred && pred.saved && hasScore);

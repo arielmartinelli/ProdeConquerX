@@ -217,16 +217,28 @@ export default function AdminPanel({ currentUser, showToast }) {
     }
   };
 
+  const parseDate = (dateStr) => {
+    if (!dateStr) return new Date();
+    if (!dateStr.includes('T')) {
+      return new Date(dateStr.replace(/-/g, '/'));
+    }
+    return new Date(dateStr);
+  };
+
   const formatDate = (dateStr) => {
     try {
-      const d = new Date(dateStr);
-      return d.toLocaleString('es-AR', {
+      const d = parseDate(dateStr);
+      const options = {
         day: 'numeric',
         month: 'short',
-        hour: '2-digit',
-        minute: '2-digit',
         timeZone: 'America/Argentina/Buenos_Aires'
-      }) + ' hs';
+      };
+      if (dateStr.includes('T')) {
+        options.hour = '2-digit';
+        options.minute = '2-digit';
+        return d.toLocaleString('es-AR', options) + ' hs';
+      }
+      return d.toLocaleDateString('es-AR', options);
     } catch (e) {
       return dateStr;
     }
