@@ -80,9 +80,8 @@ export default function Dashboard({ currentUser }) {
 
   const paidUsersCount = leaderboard.filter(u => u.has_paid).length;
   const totalCollected = paidUsersCount * 5000;
-  const prize1st = totalCollected * 0.5;
-  const prize2nd = totalCollected * 0.3;
-  const prize3rd = totalCollected * 0.2;
+  const prize1st = totalCollected * 0.65;
+  const prize2nd = totalCollected * 0.35;
 
   return (
     <div>
@@ -105,18 +104,13 @@ export default function Dashboard({ currentUser }) {
           
           <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
             <div className="prize-badge gold" style={{ background: 'rgba(243, 205, 66, 0.12)', border: '1px solid var(--color-gold)', borderRadius: '8px', padding: '0.6rem 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--bg-album-cover)', textTransform: 'uppercase' }}>🥇 1° Puesto (50%)</span>
+              <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--bg-album-cover)', textTransform: 'uppercase' }}>🥇 1° Puesto (65%)</span>
               <span style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--bg-album-cover)' }}>${prize1st.toLocaleString('es-AR')}</span>
             </div>
             
             <div className="prize-badge silver" style={{ background: 'rgba(176, 190, 197, 0.12)', border: '1px solid #b0bec5', borderRadius: '8px', padding: '0.6rem 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#455a64', textTransform: 'uppercase' }}>🥈 2° Puesto (30%)</span>
+              <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#455a64', textTransform: 'uppercase' }}>🥈 2° Puesto (35%)</span>
               <span style={{ fontSize: '1.25rem', fontWeight: '800', color: '#455a64' }}>${prize2nd.toLocaleString('es-AR')}</span>
-            </div>
-
-            <div className="prize-badge bronze" style={{ background: 'rgba(188, 170, 164, 0.12)', border: '1px solid #bcaaa4', borderRadius: '8px', padding: '0.6rem 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#5d4037', textTransform: 'uppercase' }}>🥉 3° Puesto (20%)</span>
-              <span style={{ fontSize: '1.25rem', fontWeight: '800', color: '#5d4037' }}>${prize3rd.toLocaleString('es-AR')}</span>
             </div>
           </div>
         </div>
