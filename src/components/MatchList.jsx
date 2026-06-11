@@ -300,6 +300,7 @@ export default function MatchList({ currentUser, showToast }) {
             const pred = predictions[m.id] || { home: '', away: '', saved: true };
             const isFinished = m.status === 'finished';
             const hasScore = pred.home !== '' && pred.away !== '';
+            const isLocked = isFinished || (pred && pred.saved && hasScore);
             
             return (
               <div key={m.id} className="glass-panel match-card">
@@ -331,7 +332,7 @@ export default function MatchList({ currentUser, showToast }) {
                         className="score-input"
                         maxLength="2"
                         value={pred.home}
-                        disabled={isFinished}
+                        disabled={isLocked}
                         placeholder="-"
                         onChange={(e) => handleScoreChange(m.id, 'home', e.target.value)}
                       />
@@ -355,7 +356,7 @@ export default function MatchList({ currentUser, showToast }) {
                         className="score-input"
                         maxLength="2"
                         value={pred.away}
-                        disabled={isFinished}
+                        disabled={isLocked}
                         placeholder="-"
                         onChange={(e) => handleScoreChange(m.id, 'away', e.target.value)}
                       />
