@@ -105,8 +105,12 @@ export default function MatchList({ currentUser, showToast }) {
     const toUpsert = [];
     const toDelete = [];
 
-    // Get current pending match IDs to verify they are still editable
-    const pendingMatchIds = new Set(matches.filter(m => m.status === 'pending').map(m => m.id));
+    // Get current pending match IDs that are not manually locked
+    const pendingMatchIds = new Set(
+      matches
+        .filter(m => m.status === 'pending' && !m.is_locked)
+        .map(m => m.id)
+    );
 
     Object.keys(predictions).forEach(matchIdStr => {
       const matchId = parseInt(matchIdStr);
@@ -343,7 +347,7 @@ export default function MatchList({ currentUser, showToast }) {
             const pred = predictions[m.id] || { home: '', away: '', saved: true };
             const isFinished = m.status === 'finished';
             const hasScore = pred.home !== '' && pred.away !== '';
-            const isLocked = isFinished || (pred && pred.saved && hasScore);
+            const isLocked = isFinished || m.is_locked || (pred && pred.saved && hasScore);
             
             return (
               <div key={m.id} className="glass-panel match-card">
@@ -411,6 +415,8 @@ export default function MatchList({ currentUser, showToast }) {
                   <div className="prediction-status">
                     {isFinished ? (
                       getPointsBadge(m)
+                    ) : m.is_locked ? (
+                      <span className="points-earned-badge none" style={{ background: '#f5f5f5', color: '#64748b', borderColor: '#cbd5e1' }}>🔒 Bloqueado por Admin</span>
                     ) : (
                       <>
                         <span className={`status-indicator ${!hasScore ? 'empty' : pred.saved ? 'saved' : 'unsaved'}`}></span>

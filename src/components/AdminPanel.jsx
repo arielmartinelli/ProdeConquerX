@@ -34,7 +34,8 @@ export default function AdminPanel({ currentUser, showToast }) {
           awayScore: m.away_score === null ? '' : m.away_score.toString(),
           status: m.status,
           homeTeam: m.home_team,
-          awayTeam: m.away_team
+          awayTeam: m.away_team,
+          isLocked: m.is_locked
         };
       });
       setEdits(initialEdits);
@@ -191,6 +192,40 @@ export default function AdminPanel({ currentUser, showToast }) {
         }
       };
     });
+  };
+
+  const toggleMatchLock = async (matchId) => {
+    const edit = edits[matchId];
+    if (!edit) return;
+    const newLockedState = !edit.isLocked;
+
+    try {
+      const { error } = await supabase
+        .from('matches')
+        .update({ is_locked: newLockedState })
+        .eq('id', parseInt(matchId));
+
+      if (error) throw error;
+
+      setEdits(prev => ({
+        ...prev,
+        [matchId]: {
+          ...prev[matchId],
+          isLocked: newLockedState
+        }
+      }));
+
+      showToast(
+        newLockedState 
+          ? "Apuestas bloqueadas para este partido. 🔒" 
+          : "Apuestas abiertas para este partido. 🔓", 
+        "success"
+      );
+      fetchMatches();
+    } catch (err) {
+      console.error(err);
+      showToast("Error al bloquear: " + err.message, "error");
+    }
   };
 
   const filteredMatches = matches.filter(m => {
@@ -376,6 +411,14 @@ export default function AdminPanel({ currentUser, showToast }) {
                   onClick={() => toggleFinished(m.id)}
                 >
                   {edit.status === 'finished' ? '🏁 Finalizado' : '⏳ Pendiente'}
+                </button>
+
+                <button
+                  className={`admin-finished-toggle ${edit.isLocked ? 'finished' : ''}`}
+                  style={{ borderColor: edit.isLocked ? 'var(--color-primary)' : 'var(--panel-border)', color: edit.isLocked ? 'var(--color-primary)' : '' }}
+                  onClick={() => toggleMatchLock(m.id)}
+                >
+                  {edit.isLocked ? '🔒 Bloqueado' : '🔓 Abierto'}
                 </button>
                 
                 <button

@@ -23,11 +23,12 @@ CREATE TABLE matches (
   home_team TEXT NOT NULL,
   away_team TEXT NOT NULL,
   group_name TEXT,
-  match_date TIMESTAMPTZ NOT NULL, -- CHANGED TO TIMESTAMPTZ FOR KICK-OFF TIME LIMITS
+  match_date TIMESTAMPTZ NOT NULL,
   stage TEXT NOT NULL,
   home_score INTEGER DEFAULT NULL,
   away_score INTEGER DEFAULT NULL,
-  status TEXT NOT NULL DEFAULT 'pending'
+  status TEXT NOT NULL DEFAULT 'pending',
+  is_locked BOOLEAN NOT NULL DEFAULT FALSE -- MANUAL LOCKING FEATURE
 );
 
 CREATE TABLE predictions (
