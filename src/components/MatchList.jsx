@@ -105,15 +105,8 @@ export default function MatchList({ currentUser, showToast }) {
     const toUpsert = [];
     const toDelete = [];
 
-    // Get current pending match IDs that haven't reached their match day yet
-    const pendingMatchIds = new Set(
-      matches
-        .filter(m => {
-          const lockTime = getLockTime(m.match_date);
-          return m.status === 'pending' && new Date() < lockTime;
-        })
-        .map(m => m.id)
-    );
+    // Get current pending match IDs to verify they are still editable
+    const pendingMatchIds = new Set(matches.filter(m => m.status === 'pending').map(m => m.id));
 
     Object.keys(predictions).forEach(matchIdStr => {
       const matchId = parseInt(matchIdStr);
@@ -349,10 +342,8 @@ export default function MatchList({ currentUser, showToast }) {
           {filteredMatches.map(m => {
             const pred = predictions[m.id] || { home: '', away: '', saved: true };
             const isFinished = m.status === 'finished';
-            const lockTime = getLockTime(m.match_date);
-            const hasStartedDay = new Date() >= lockTime;
             const hasScore = pred.home !== '' && pred.away !== '';
-            const isLocked = isFinished || hasStartedDay || (pred && pred.saved && hasScore);
+            const isLocked = isFinished || (pred && pred.saved && hasScore);
             
             return (
               <div key={m.id} className="glass-panel match-card">
@@ -420,8 +411,6 @@ export default function MatchList({ currentUser, showToast }) {
                   <div className="prediction-status">
                     {isFinished ? (
                       getPointsBadge(m)
-                    ) : hasStartedDay ? (
-                      <span className="points-earned-badge none" style={{ background: '#f5f5f5', color: '#64748b', borderColor: '#cbd5e1' }}>⏳ Día del Partido (Cerrado)</span>
                     ) : (
                       <>
                         <span className={`status-indicator ${!hasScore ? 'empty' : pred.saved ? 'saved' : 'unsaved'}`}></span>
