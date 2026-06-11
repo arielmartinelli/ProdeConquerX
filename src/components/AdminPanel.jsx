@@ -217,6 +217,21 @@ export default function AdminPanel({ currentUser, showToast }) {
     }
   };
 
+  const formatDate = (dateStr) => {
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleString('es-AR', {
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'America/Argentina/Buenos_Aires'
+      }) + ' hs';
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
   if (loading) {
     return (
       <div className="empty-state">
@@ -281,7 +296,7 @@ export default function AdminPanel({ currentUser, showToast }) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                   <span className="sticker-number-badge" style={{ background: 'var(--bg-album-cover)', color: 'white', borderColor: 'var(--bg-album-cover)' }}>N° {m.id}</span>
-                  <span>{m.group_name ? `Grupo ${m.group_name}` : getStageLabel(m.stage)} | {m.match_date}</span>
+                  <span>{m.group_name ? `Grupo ${m.group_name}` : getStageLabel(m.stage)} | {formatDate(m.match_date)}</span>
                 </div>
                 
                 {isKout ? (

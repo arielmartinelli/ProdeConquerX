@@ -105,8 +105,12 @@ export default function MatchList({ currentUser, showToast }) {
     const toUpsert = [];
     const toDelete = [];
 
-    // Get current pending match IDs to verify they are still editable
-    const pendingMatchIds = new Set(matches.filter(m => m.status === 'pending').map(m => m.id));
+    // Get current pending match IDs that haven't started yet
+    const pendingMatchIds = new Set(
+      matches
+        .filter(m => m.status === 'pending' && new Date() < new Date(m.match_date))
+        .map(m => m.id)
+    );
 
     Object.keys(predictions).forEach(matchIdStr => {
       const matchId = parseInt(matchIdStr);
@@ -228,6 +232,21 @@ export default function MatchList({ currentUser, showToast }) {
     }
   };
 
+  const formatDate = (dateStr) => {
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleString('es-AR', {
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'America/Argentina/Buenos_Aires'
+      }) + ' hs';
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
   if (loading) {
     return (
       <div className="empty-state">
@@ -299,8 +318,9 @@ export default function MatchList({ currentUser, showToast }) {
           {filteredMatches.map(m => {
             const pred = predictions[m.id] || { home: '', away: '', saved: true };
             const isFinished = m.status === 'finished';
+            const hasStarted = new Date() >= new Date(m.match_date);
             const hasScore = pred.home !== '' && pred.away !== '';
-            const isLocked = isFinished || (pred && pred.saved && hasScore);
+            const isLocked = isFinished || hasStarted || (pred && pred.saved && hasScore);
             
             return (
               <div key={m.id} className="glass-panel match-card">
@@ -309,7 +329,7 @@ export default function MatchList({ currentUser, showToast }) {
                     {m.group_name ? `Grupo ${m.group_name}` : getStageLabel(m.stage)}
                   </span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span className="match-date">{m.match_date}</span>
+                    <span className="match-date">{formatDate(m.match_date)}</span>
                     <span className="sticker-number-badge">N° {m.id}</span>
                   </div>
                 </div>
@@ -368,6 +388,8 @@ export default function MatchList({ currentUser, showToast }) {
                   <div className="prediction-status">
                     {isFinished ? (
                       getPointsBadge(m)
+                    ) : hasStarted ? (
+                      <span className="points-earned-badge none" style={{ background: '#f5f5f5', color: '#64748b', borderColor: '#cbd5e1' }}>⏳ Partido Iniciado</span>
                     ) : (
                       <>
                         <span className={`status-indicator ${!hasScore ? 'empty' : pred.saved ? 'saved' : 'unsaved'}`}></span>
