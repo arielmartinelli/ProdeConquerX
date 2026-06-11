@@ -31,7 +31,7 @@ export default function Dashboard({ currentUser }) {
       try {
         const { data, error } = await supabase
           .from('users')
-          .select('id, username, display_name, score, exact_count, outcome_count')
+          .select('id, username, display_name, score, exact_count, outcome_count, has_paid')
           .order('score', { ascending: false })
           .order('exact_count', { ascending: false })
           .order('display_name', { ascending: true });
@@ -78,11 +78,49 @@ export default function Dashboard({ currentUser }) {
   const silver = leaderboard[1];
   const bronze = leaderboard[2];
 
+  const paidUsersCount = leaderboard.filter(u => u.has_paid).length;
+  const totalCollected = paidUsersCount * 5000;
+  const prize1st = totalCollected * 0.5;
+  const prize2nd = totalCollected * 0.3;
+  const prize3rd = totalCollected * 0.2;
+
   return (
     <div>
       <h2 className="dashboard-title">
         <span>🏆</span> Tabla de Posiciones
       </h2>
+
+      {/* Pool Summary Card */}
+      <div className="glass-panel pool-summary-card" style={{ marginBottom: '2rem', padding: '1.5rem', border: '3px solid var(--color-gold)', background: 'linear-gradient(135deg, #fffcf5 0%, #fff 100%)' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h4 style={{ textTransform: 'uppercase', color: 'var(--text-secondary)', fontSize: '0.85rem', margin: 0, letterSpacing: '1px' }}>Total Recaudado</h4>
+            <span style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--bg-album-cover)' }}>
+              ${totalCollected.toLocaleString('es-AR')} ARS
+            </span>
+            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              {paidUsersCount} de {leaderboard.length} jugadores pagaron la inscripción ($5.000)
+            </p>
+          </div>
+          
+          <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
+            <div className="prize-badge gold" style={{ background: 'rgba(243, 205, 66, 0.12)', border: '1px solid var(--color-gold)', borderRadius: '8px', padding: '0.6rem 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--bg-album-cover)', textTransform: 'uppercase' }}>🥇 1° Puesto (50%)</span>
+              <span style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--bg-album-cover)' }}>${prize1st.toLocaleString('es-AR')}</span>
+            </div>
+            
+            <div className="prize-badge silver" style={{ background: 'rgba(176, 190, 197, 0.12)', border: '1px solid #b0bec5', borderRadius: '8px', padding: '0.6rem 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#455a64', textTransform: 'uppercase' }}>🥈 2° Puesto (30%)</span>
+              <span style={{ fontSize: '1.25rem', fontWeight: '800', color: '#455a64' }}>${prize2nd.toLocaleString('es-AR')}</span>
+            </div>
+
+            <div className="prize-badge bronze" style={{ background: 'rgba(188, 170, 164, 0.12)', border: '1px solid #bcaaa4', borderRadius: '8px', padding: '0.6rem 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#5d4037', textTransform: 'uppercase' }}>🥉 3° Puesto (20%)</span>
+              <span style={{ fontSize: '1.25rem', fontWeight: '800', color: '#5d4037' }}>${prize3rd.toLocaleString('es-AR')}</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Podium Display */}
       {leaderboard.length >= 3 && (
@@ -151,6 +189,7 @@ export default function Dashboard({ currentUser }) {
               <tr>
                 <th className="rank-col" style={{ textAlign: 'center' }}>Pos</th>
                 <th>Usuario</th>
+                <th style={{ textAlign: 'center' }}>Inscripción</th>
                 <th style={{ textAlign: 'center' }}>Exactos (3pts)</th>
                 <th style={{ textAlign: 'center' }}>Resultados (1pt)</th>
                 <th style={{ textAlign: 'center' }}>Puntos</th>
@@ -173,6 +212,13 @@ export default function Dashboard({ currentUser }) {
                       <span style={{ fontSize: '1.2rem' }}>{getAvatar(u.username)}</span>
                       <span>{u.display_name}</span>
                       {isMe && <span className="user-tag-current">Tú</span>}
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      {u.has_paid ? (
+                        <span className="payment-badge paid">Pagado</span>
+                      ) : (
+                        <span className="payment-badge pending">Pendiente</span>
+                      )}
                     </td>
                     <td style={{ textAlign: 'center', fontWeight: '600' }}>
                       {u.exact_count}

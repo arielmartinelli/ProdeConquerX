@@ -2,8 +2,30 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabaseClient';
 import { getFlag } from '../utils/flags';
 
+const AVATAR_MAP = {
+  ariel: "🦖",
+  agostina: "🦄",
+  jazmin: "🦊",
+  ariana: "🌸",
+  cande: "🐼",
+  cris: "🦁",
+  tomi: "🎮",
+  lucas: "🚀",
+  manu: "🐯",
+  nina: "🐱",
+  juli: "🐨",
+  jaz_mercado: "✨",
+  fabri: "⚡"
+};
+
+function getAvatar(username) {
+  return AVATAR_MAP[username] || "⚽";
+}
+
 export default function AdminPanel({ currentUser, showToast }) {
   const [matches, setMatches] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [showUsersAdmin, setShowUsersAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   
   // Track match edits locally
@@ -15,7 +37,40 @@ export default function AdminPanel({ currentUser, showToast }) {
 
   useEffect(() => {
     fetchMatches();
+    fetchUsers();
   }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, username, display_name, score, has_paid')
+        .order('display_name');
+      if (error) throw error;
+      setUsers(data || []);
+    } catch (err) {
+      console.error(err);
+      showToast("Error al cargar los usuarios desde Supabase.", "error");
+    }
+  };
+
+  const toggleUserPayment = async (userId, currentPaidState) => {
+    const newPaidState = !currentPaidState;
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ has_paid: newPaidState })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, has_paid: newPaidState } : u));
+      showToast("Estado de pago actualizado correctamente. 💰", "success");
+    } catch (err) {
+      console.error(err);
+      showToast("Error al cambiar estado de pago: " + err.message, "error");
+    }
+  };
 
   const fetchMatches = async () => {
     setLoading(true);
@@ -330,6 +385,53 @@ export default function AdminPanel({ currentUser, showToast }) {
             </select>
           )}
         </div>
+      </div>
+
+      {/* User & Payment Management Panel */}
+      <div className="glass-panel" style={{ marginBottom: '2rem', padding: '1.2rem' }}>
+        <div 
+          onClick={() => setShowUsersAdmin(!showUsersAdmin)} 
+          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+        >
+          <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--bg-album-cover)', textTransform: 'uppercase', fontSize: '1.1rem', fontWeight: '800' }}>
+            👥 Gestión de Usuarios y Pagos
+          </h3>
+          <span style={{ fontSize: '1.2rem', color: 'var(--bg-album-cover)', fontWeight: '850' }}>{showUsersAdmin ? '▲' : '▼'}</span>
+        </div>
+
+        {showUsersAdmin && (
+          <div style={{ marginTop: '1.5rem', borderTop: '2px solid #f4eede', paddingTop: '1rem' }}>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+              Marca quién pagó la inscripción de $5.000 para calcular el total recaudado y los premios.
+            </p>
+            <div className="admin-users-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
+              {users.map(u => (
+                <div key={u.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#faf8f5', padding: '0.8rem', borderRadius: 'var(--border-radius-sm)', border: '1px solid #cbd5e1' }}>
+                  <span style={{ fontWeight: '700', textTransform: 'uppercase', fontSize: '0.9rem', color: 'var(--text-dark)' }}>
+                    {getAvatar(u.username)} {u.display_name}
+                  </span>
+                  <button
+                    onClick={() => toggleUserPayment(u.id, u.has_paid)}
+                    style={{
+                      background: u.has_paid ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                      color: u.has_paid ? '#059669' : '#dc2626',
+                      border: `1.5px solid ${u.has_paid ? '#10b981' : '#ef4444'}`,
+                      borderRadius: '4px',
+                      padding: '6px 10px',
+                      fontSize: '0.75rem',
+                      fontWeight: '800',
+                      cursor: 'pointer',
+                      textTransform: 'uppercase',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    {u.has_paid ? '💸 Pagado' : '⏳ Impago'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '3rem' }}>
