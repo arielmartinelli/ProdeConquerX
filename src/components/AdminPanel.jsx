@@ -324,7 +324,8 @@ export default function AdminPanel({ currentUser, showToast }) {
     // Map matches that are finished to quickly query results
     const finishedMatches = {};
     allMatches.forEach(m => {
-      if (m.status === 'finished' && m.home_score !== null && m.away_score !== null) {
+      // Exclude group stage matches from points calculation (points start from round of 32 / 'r32')
+      if (m.status === 'finished' && m.home_score !== null && m.away_score !== null && m.stage !== 'group') {
         finishedMatches[m.id] = { home: m.home_score, away: m.away_score };
       }
     });

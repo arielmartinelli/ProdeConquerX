@@ -461,10 +461,17 @@ export default function MatchList({ currentUser, showToast }) {
                         {/* Center Column: Scores or Inputs */}
                         <div className="fifa-center-col">
                           {isFinished ? (
-                            <div className="fifa-scores-display">
-                              <span className="fifa-score-val">{m.home_score}</span>
-                              <span className="fifa-score-divider">-</span>
-                              <span className="fifa-score-val">{m.away_score}</span>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                              <div className="fifa-scores-display">
+                                <span className="fifa-score-val">{m.home_score}</span>
+                                <span className="fifa-score-divider">-</span>
+                                <span className="fifa-score-val">{m.away_score}</span>
+                              </div>
+                              {pred && (pred.home !== '' || pred.away !== '') && (
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem', fontWeight: '700' }}>
+                                  Tú: {pred.home} - {pred.away}
+                                </span>
+                              )}
                             </div>
                           ) : (
                             <div className="fifa-inputs-display">
