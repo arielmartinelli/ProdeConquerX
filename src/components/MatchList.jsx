@@ -30,7 +30,8 @@ export default function MatchList({ currentUser, showToast }) {
       const { data: matchesData, error: matchesError } = await supabase
         .from('matches')
         .select('*')
-        .order('id');
+        .order('match_date', { ascending: true })
+        .order('id', { ascending: true });
       if (matchesError) throw matchesError;
       setMatches(matchesData || []);
 

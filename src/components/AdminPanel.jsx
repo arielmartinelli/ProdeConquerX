@@ -78,7 +78,8 @@ export default function AdminPanel({ currentUser, showToast }) {
       const { data, error } = await supabase
         .from('matches')
         .select('*')
-        .order('id');
+        .order('match_date', { ascending: true })
+        .order('id', { ascending: true });
       if (error) throw error;
       setMatches(data || []);
       
