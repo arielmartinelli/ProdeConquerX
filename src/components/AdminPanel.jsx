@@ -195,6 +195,8 @@ export default function AdminPanel({ currentUser, showToast }) {
   // Filter states
   const [selectedStage, setSelectedStage] = useState('all');
   const [selectedGroup, setSelectedGroup] = useState('all');
+  const [selectedDay, setSelectedDay] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState('all');
 
   useEffect(() => {
     fetchMatches();
@@ -450,11 +452,49 @@ export default function AdminPanel({ currentUser, showToast }) {
     if (selectedStage === 'kout' && m.stage === 'group') return false;
     if (selectedStage !== 'all' && selectedStage !== 'group' && selectedStage !== 'kout' && m.stage !== selectedStage) return false;
 
-    if (selectedStage !== 'kout') {
-      if (selectedGroup !== 'all' && m.group_name !== selectedGroup) return false;
+    if (selectedStatus === 'pending' && m.status !== 'pending') return false;
+    if (selectedStatus === 'finished' && m.status !== 'finished') return false;
+
+    if (selectedDay !== 'all') {
+      const dateObj = parseDate(m.match_date);
+      const dayOptions = {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'America/Argentina/Buenos_Aires'
+      };
+      let dayLabel = dateObj.toLocaleDateString('es-AR', dayOptions);
+      if (dayLabel) {
+        dayLabel = dayLabel.charAt(0).toUpperCase() + dayLabel.slice(1);
+      }
+      if (dayLabel !== selectedDay) return false;
     }
+
     return true;
   });
+
+  const getUniqueDays = () => {
+    const days = [];
+    matches.forEach(m => {
+      const dateObj = parseDate(m.match_date);
+      const dayOptions = {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'America/Argentina/Buenos_Aires'
+      };
+      let dayLabel = dateObj.toLocaleDateString('es-AR', dayOptions);
+      if (dayLabel) {
+        dayLabel = dayLabel.charAt(0).toUpperCase() + dayLabel.slice(1);
+      }
+      if (!days.includes(dayLabel)) {
+        days.push(dayLabel);
+      }
+    });
+    return days;
+  };
 
   const getStageLabel = (stage) => {
     switch (stage) {
@@ -570,6 +610,27 @@ export default function AdminPanel({ currentUser, showToast }) {
               ))}
             </select>
           )}
+
+          <select
+            className="filter-select"
+            value={selectedDay}
+            onChange={(e) => setSelectedDay(e.target.value)}
+          >
+            <option value="all">Todos los Días</option>
+            {getUniqueDays().map(day => (
+              <option key={day} value={day}>{day}</option>
+            ))}
+          </select>
+
+          <select
+            className="filter-select"
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+          >
+            <option value="all">Todos los Estados</option>
+            <option value="pending">Pendientes</option>
+            <option value="finished">Finalizados</option>
+          </select>
         </div>
       </div>
 

@@ -25,6 +25,14 @@ export default function Dashboard({ currentUser }) {
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [stats, setStats] = useState({
+    votedCount: 0,
+    notVotedCount: 0,
+    exactCount: 0,
+    outcomeCount: 0,
+    totalAcertados: 0,
+    noAcertadosCount: 0
+  });
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
@@ -37,6 +45,36 @@ export default function Dashboard({ currentUser }) {
           .order('display_name', { ascending: true });
 
         if (error) throw error;
+
+        // Load currentUser predictions
+        const { data: userPreds, error: predError } = await supabase
+          .from('predictions')
+          .select('match_id, points_earned')
+          .eq('user_id', currentUser.id);
+        if (predError) throw predError;
+
+        // Load matches
+        const { data: matchesData, error: matchesError } = await supabase
+          .from('matches')
+          .select('id, status');
+        if (matchesError) throw matchesError;
+
+        const totalMatches = matchesData.length;
+        const votedCount = userPreds.length;
+        const notVotedCount = totalMatches - votedCount;
+        const exactCount = userPreds.filter(p => p.points_earned === 3).length;
+        const outcomeCount = userPreds.filter(p => p.points_earned === 1).length;
+        const totalAcertados = exactCount + outcomeCount;
+        const noAcertadosCount = userPreds.filter(p => p.points_earned === 0).length;
+
+        setStats({
+          votedCount,
+          notVotedCount,
+          exactCount,
+          outcomeCount,
+          totalAcertados,
+          noAcertadosCount
+        });
 
         // Map ranking position manually based on ordered rows
         const rankedData = (data || []).map((user, index) => ({
@@ -88,6 +126,56 @@ export default function Dashboard({ currentUser }) {
       <h2 className="dashboard-title">
         <span>🏆</span> Tabla de Posiciones
       </h2>
+
+      {/* Personal Prediction Stats Dashboard */}
+      <div className="personal-stats-dashboard glass-panel" style={{ marginBottom: '2rem', padding: '1.5rem', border: '2px solid rgba(0, 102, 204, 0.15)', background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 244, 248, 0.95) 100%)', borderRadius: '12px' }}>
+        <h3 style={{ textTransform: 'uppercase', color: 'var(--color-secondary)', fontSize: '0.95rem', fontWeight: '800', letterSpacing: '1px', marginBottom: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: 0 }}>
+          📊 Mi Dashboard de Pronósticos
+        </h3>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '1rem' }}>
+          {/* Card 1: Votados */}
+          <div style={{ background: '#fff', border: '1px solid rgba(0, 102, 204, 0.1)', padding: '1rem', borderRadius: '8px', textAlign: 'center', boxShadow: 'var(--shadow-glued)' }}>
+            <span style={{ fontSize: '1.5rem' }}>🗳️</span>
+            <h5 style={{ margin: '0.4rem 0 0.2rem 0', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Votados</h5>
+            <span style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--color-secondary)' }}>
+              {stats.votedCount} <span style={{ fontSize: '0.8rem', fontWeight: '500', color: 'var(--text-muted)' }}>/ 104</span>
+            </span>
+          </div>
+
+          {/* Card 2: Sin Votar */}
+          <div style={{ background: '#fff', border: '1px solid rgba(0, 102, 204, 0.1)', padding: '1rem', borderRadius: '8px', textAlign: 'center', boxShadow: 'var(--shadow-glued)' }}>
+            <span style={{ fontSize: '1.5rem' }}>⏳</span>
+            <h5 style={{ margin: '0.4rem 0 0.2rem 0', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Sin Votar</h5>
+            <span style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-muted)' }}>
+              {stats.notVotedCount}
+            </span>
+          </div>
+
+          {/* Card 3: Acertados */}
+          <div style={{ background: '#fff', border: '1px solid rgba(16, 185, 129, 0.2)', padding: '1rem', borderRadius: '8px', textAlign: 'center', boxShadow: 'var(--shadow-glued)', outline: '2px solid rgba(16, 185, 129, 0.1)' }}>
+            <span style={{ fontSize: '1.5rem' }}>🎯</span>
+            <h5 style={{ margin: '0.4rem 0 0.2rem 0', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Acertados</h5>
+            <span style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--color-primary)' }}>
+              {stats.totalAcertados}
+            </span>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.4rem', fontSize: '0.65rem', marginTop: '0.2rem', color: 'var(--text-secondary)' }}>
+              <span>🎯 Ex: {stats.exactCount}</span>
+              <span>•</span>
+              <span>🔮 Res: {stats.outcomeCount}</span>
+            </div>
+          </div>
+
+          {/* Card 4: No Acertados */}
+          <div style={{ background: '#fff', border: '1px solid rgba(255, 42, 95, 0.2)', padding: '1rem', borderRadius: '8px', textAlign: 'center', boxShadow: 'var(--shadow-glued)' }}>
+            <span style={{ fontSize: '1.5rem' }}>🤷</span>
+            <h5 style={{ margin: '0.4rem 0 0.2rem 0', fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>No Acertados</h5>
+            <span style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--color-accent)' }}>
+              {stats.noAcertadosCount}
+            </span>
+          </div>
+        </div>
+      </div>
 
       {/* Pool Summary Card */}
       <div className="glass-panel pool-summary-card" style={{ marginBottom: '2rem', padding: '1.5rem', border: '3px solid var(--color-gold)', background: 'linear-gradient(135deg, #fffcf5 0%, #fff 100%)' }}>
