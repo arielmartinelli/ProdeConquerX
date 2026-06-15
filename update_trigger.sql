@@ -11,7 +11,6 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-    match_kickoff TIMESTAMPTZ;
     match_is_locked BOOLEAN;
     match_status TEXT;
     existing_pred RECORD;
@@ -24,6 +23,9 @@ BEGIN
         IF existing_pred.predicted_home_score = NEW.predicted_home_score AND 
            existing_pred.predicted_away_score = NEW.predicted_away_score THEN
             RETURN NEW;
+        ELSE
+            -- Reject any changes to the predicted scores once submitted
+            RAISE EXCEPTION 'Una vez realizado el pronóstico, no se puede modificar.';
         END IF;
     END IF;
 
@@ -32,11 +34,13 @@ BEGIN
         IF OLD.predicted_home_score = NEW.predicted_home_score AND 
            OLD.predicted_away_score = NEW.predicted_away_score THEN
             RETURN NEW;
+        ELSE
+            RAISE EXCEPTION 'Una vez realizado el pronóstico, no se puede modificar.';
         END IF;
     END IF;
 
-    -- Obtener la hora del partido, estado y si está bloqueado manualmente
-    SELECT match_date, is_locked, status INTO match_kickoff, match_is_locked, match_status
+    -- Obtener el estado y si está bloqueado manualmente
+    SELECT is_locked, status INTO match_is_locked, match_status
     FROM matches 
     WHERE id = NEW.match_id;
     
@@ -45,14 +49,9 @@ BEGIN
         RAISE EXCEPTION 'El partido ya ha finalizado. No se pueden recibir más pronósticos.';
     END IF;
     
-    -- B. Validar si el partido fue bloqueado manualmente por Ariel
+    -- B. Validar si el partido fue bloqueado manualmente por Ariel (bloqueo manual)
     IF match_is_locked = TRUE THEN
         RAISE EXCEPTION 'Votación bloqueada por el Administrador.';
-    END IF;
-
-    -- C. Validar el límite de 1 hora antes del partido (Cierre de apuestas)
-    IF NOW() >= (match_kickoff - INTERVAL '1 hour') THEN
-        RAISE EXCEPTION 'La votación está cerrada. Límite: 1 hora antes del inicio del partido.';
     END IF;
 
     RETURN NEW;

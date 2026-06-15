@@ -10,14 +10,6 @@ export default function MatchList({ currentUser, showToast }) {
   const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
-  const [now, setNow] = useState(Date.now());
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setNow(Date.now());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   const STADIUM_NAMES = {
     1: "Estadio Azteca (Ciudad de México)",
@@ -40,19 +32,6 @@ export default function MatchList({ currentUser, showToast }) {
 
   const getStadiumName = (stadiumId) => {
     return STADIUM_NAMES[stadiumId] || "Estadio del Mundial";
-  };
-
-  const getCountdownText = (matchKickoffTime) => {
-    const oneHourInMs = 1 * 60 * 60 * 1000;
-    const diff = (matchKickoffTime - oneHourInMs) - now;
-    if (diff <= 0) return 'Cerrando apuestas...';
-
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-    const pad = (num) => String(num).padStart(2, '0');
-    return `⏳ Cierra en: ${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
   };
 
   const getMatchHour = (dateStr) => {
@@ -163,19 +142,39 @@ export default function MatchList({ currentUser, showToast }) {
     const toUpsert = [];
     const toDelete = [];
 
-    const nowTime = new Date().getTime();
-    const oneHourInMs = 1 * 60 * 60 * 1000;
-
-    // Get current pending match IDs that are not manually locked and not within 1 hour of kickoff
+    // Get current pending match IDs that are not manually locked
     const pendingMatchIds = new Set(
       matches
         .filter(m => {
-          const matchKickoff = new Date(m.match_date).getTime();
-          const isTimeLocked = nowTime >= (matchKickoff - oneHourInMs);
-          return m.status === 'pending' && !m.is_locked && !isTimeLocked;
+          return m.status === 'pending' && !m.is_locked;
         })
         .map(m => m.id)
     );
+
+    // Validate for partial predictions (one field filled, other empty)
+    const invalidMatches = [];
+    Object.keys(predictions).forEach(matchIdStr => {
+      const matchId = parseInt(matchIdStr);
+      const p = predictions[matchIdStr];
+      if (p.saved) return;
+      
+      if (!pendingMatchIds.has(matchId)) return;
+
+      const hasHome = p.home !== '';
+      const hasAway = p.away !== '';
+      if ((hasHome && !hasAway) || (!hasHome && hasAway)) {
+        const match = matches.find(m => m.id === matchId);
+        if (match) {
+          invalidMatches.push(`${match.home_team} vs ${match.away_team}`);
+        }
+      }
+    });
+
+    if (invalidMatches.length > 0) {
+      showToast(`Debes completar ambos resultados (local y visitante) para: ${invalidMatches.join(', ')}`, "error");
+      setSaveLoading(false);
+      return;
+    }
 
     Object.keys(predictions).forEach(matchIdStr => {
       const matchId = parseInt(matchIdStr);
@@ -183,7 +182,7 @@ export default function MatchList({ currentUser, showToast }) {
       if (p.saved) return; // ignore already saved
 
       if (!pendingMatchIds.has(matchId)) {
-        // Skip matches that are already finished
+        // Skip matches that are locked or finished
         return;
       }
 
@@ -438,12 +437,9 @@ export default function MatchList({ currentUser, showToast }) {
                   const pred = predictions[m.id] || { home: '', away: '', saved: true };
                   const isFinished = m.status === 'finished';
                   const hasScore = pred.home !== '' && pred.away !== '';
-                  
-                  const matchKickoff = new Date(m.match_date).getTime();
-                  const oneHourInMs = 1 * 60 * 60 * 1000;
-                  const isTimeLocked = now >= (matchKickoff - oneHourInMs);
+                  const hasPredictionSaved = pred && pred.saved && hasScore;
 
-                  const isLocked = isFinished || m.is_locked || isTimeLocked || (pred && pred.saved && hasScore);
+                  const isLocked = isFinished || m.is_locked || hasPredictionSaved;
 
                   return (
                     <div key={m.id} className={`fifa-match-row ${isFinished ? 'finished' : ''}`}>
@@ -475,7 +471,7 @@ export default function MatchList({ currentUser, showToast }) {
                                 onChange={(e) => handleScoreChange(m.id, 'home', e.target.value)}
                               />
                               <span className="fifa-vs-divider">
-                                {isTimeLocked ? '🔒' : getMatchHour(m.match_date)}
+                                {isLocked ? '🔒' : getMatchHour(m.match_date)}
                               </span>
                               <input
                                 type="text"
@@ -509,10 +505,14 @@ export default function MatchList({ currentUser, showToast }) {
                             getPointsBadge(m)
                           ) : m.is_locked ? (
                             <span className="voting-locked-badge">🔒 Votación bloqueada</span>
-                          ) : isTimeLocked ? (
-                            <span className="voting-locked-badge expired">⏳ Votación cerrada</span>
+                          ) : hasPredictionSaved ? (
+                            <span className="voting-locked-badge" style={{ background: 'rgba(0, 102, 204, 0.08)', color: '#0066cc', borderColor: '#99ccff' }}>
+                              🔒 Pronóstico Guardado (Bloqueado)
+                            </span>
                           ) : (
-                            <span className="voting-countdown-badge">{getCountdownText(matchKickoff)}</span>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                              Abierto para pronósticos
+                            </span>
                           )}
                         </div>
 

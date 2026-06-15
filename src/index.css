@@ -3,33 +3,33 @@
 :root {
   --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   
-  /* Panini Album Color Palette */
-  --bg-album-cover: #5A0B21; /* Classic FIFA/Panini maroon */
-  --bg-album-page: #fbf9f4; /* Warm paper texture cream */
-  --panel-border: rgba(90, 11, 33, 0.15);
+  /* Panini Album 2026 Blue/Space Color Palette */
+  --bg-album-cover: #0b132b; /* Deep Space/Navy blue for the 2026 album */
+  --bg-album-page: #f0f4f8; /* Cool light blue-grey paper page texture */
+  --panel-border: rgba(11, 19, 43, 0.1);
   
-  --color-primary: #D22630; /* Panini Red */
-  --color-secondary: #004d98; /* Classic Blue */
-  --color-accent: #ff2a5f;
-  --color-gold: #f3cd42;
-  --color-gold-gradient: linear-gradient(135deg, #ffe57f 0%, #f3cd42 50%, #c49b00 100%);
-  --color-holo-gradient: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 30%, #fbc2eb 70%, #ffe066 100%);
+  --color-primary: #10b981; /* Panini 26 Teal/Green */
+  --color-secondary: #0066cc; /* Panini 26 Electric Blue */
+  --color-accent: #ff2a5f; /* Neon Magenta */
+  --color-gold: #ffb703; /* Panini Amber/Gold */
+  --color-gold-gradient: linear-gradient(135deg, #ffea00 0%, #ffb703 100%);
+  --color-holo-gradient: linear-gradient(135deg, #00f5d4 0%, #00b4d8 30%, #9b5de5 70%, #f15bb5 100%);
   
-  --text-dark: #3c2f2f;
-  --text-secondary: #705e5e;
+  --text-dark: #1e293b; /* Slate 800 */
+  --text-secondary: #64748b; /* Slate 500 */
   --text-light: #ffffff;
-  --text-muted: #a69898;
+  --text-muted: #94a3b8; /* Slate 400 */
   
   /* Podiums */
-  --color-gold-podium: #f3cd42;
+  --color-gold-podium: #ffb703;
   --color-silver-podium: #cfd8dc;
   --color-bronze-podium: #d7ccc8;
   
   /* Shadows & Glows */
-  --shadow-sticker: 0 6px 14px rgba(90, 11, 33, 0.08);
-  --shadow-sticker-hover: 0 12px 24px rgba(90, 11, 33, 0.15);
-  --shadow-glued: 0 2px 4px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.15);
+  --shadow-sticker: 0 6px 14px rgba(11, 19, 43, 0.06);
+  --shadow-sticker-hover: 0 12px 24px rgba(11, 19, 43, 0.12);
+  --shadow-glued: 0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.2);
   
   --transition-smooth: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   --border-radius-sm: 4px;
@@ -51,7 +51,7 @@ html, body {
 body {
   font-family: var(--font-sans);
   background: var(--bg-album-cover);
-  background-image: radial-gradient(circle at 50% 0%, #7d1230 0%, #3e0716 100%);
+  background-image: radial-gradient(circle at 50% 0%, #102a43 0%, #0a1128 100%);
   background-attachment: fixed;
   color: var(--text-dark);
   min-height: 100vh;
@@ -229,7 +229,7 @@ body {
   bottom: 0;
   left: 50%;
   width: 2px;
-  background: rgba(90, 11, 33, 0.05);
+  background: rgba(0, 102, 204, 0.08);
   box-shadow: 0 0 10px rgba(0,0,0,0.1);
   pointer-events: none;
   z-index: 10;
@@ -247,7 +247,7 @@ body {
   width: 100%;
   max-width: 440px;
   background: var(--bg-album-cover);
-  background-image: radial-gradient(circle at 50% 0%, #8b1335 0%, #3e0716 100%);
+  background-image: radial-gradient(circle at 50% 0%, var(--color-secondary) 0%, var(--bg-album-cover) 100%);
   border: 5px solid var(--color-gold);
   border-radius: var(--border-radius-md);
   padding: 3rem 2.5rem;
@@ -464,7 +464,7 @@ body {
 .gold .podium-pillar {
   height: 140px;
   --border-color: var(--color-gold);
-  --bg-gradient: linear-gradient(135deg, var(--bg-album-cover) 0%, #8b1335 100%);
+  --bg-gradient: linear-gradient(135deg, var(--bg-album-cover) 0%, var(--color-secondary) 100%);
   background-image: var(--color-gold-gradient);
 }
 
@@ -497,7 +497,7 @@ body {
   -webkit-overflow-scrolling: touch;
   margin-top: 1rem;
   border-radius: var(--border-radius-sm);
-  border: 1px solid rgba(90, 11, 33, 0.05);
+  border: 1px solid rgba(0, 102, 204, 0.08);
 }
 
 .leaderboard-table {
@@ -518,13 +518,13 @@ body {
 
 .leaderboard-table td {
   padding: 1rem;
-  border-bottom: 1px solid rgba(90, 11, 33, 0.05);
+  border-bottom: 1px solid rgba(0, 102, 204, 0.08);
   font-size: 1rem;
   color: var(--text-dark);
 }
 
 .leaderboard-table tbody tr:hover {
-  background: rgba(90, 11, 33, 0.02);
+  background: rgba(0, 102, 204, 0.02);
 }
 
 .leaderboard-table tbody tr.current-user {
@@ -878,7 +878,7 @@ body {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(90, 11, 33, 0.4);
+  background: rgba(11, 19, 43, 0.5);
   backdrop-filter: blur(4px);
   z-index: 200;
   display: flex;
@@ -1406,7 +1406,7 @@ body {
   display: flex;
   flex-direction: column;
   padding: 1.2rem 1.5rem;
-  border-bottom: 1px solid rgba(90, 11, 33, 0.06);
+  border-bottom: 1px solid rgba(0, 102, 204, 0.06);
   background: white;
   position: relative;
   transition: background 0.2s ease;
@@ -1417,7 +1417,7 @@ body {
 }
 
 .fifa-match-row:hover {
-  background: rgba(90, 11, 33, 0.01);
+  background: rgba(0, 102, 204, 0.01);
 }
 
 .fifa-match-main {
@@ -1483,10 +1483,10 @@ body {
   font-weight: 850;
   font-size: 1.6rem;
   color: var(--bg-album-cover);
-  background: rgba(90, 11, 33, 0.03);
+  background: rgba(0, 102, 204, 0.03);
   padding: 4px 16px;
   border-radius: 6px;
-  border: 1px solid rgba(90, 11, 33, 0.08);
+  border: 1px solid rgba(0, 102, 204, 0.08);
 }
 
 .fifa-score-val {
