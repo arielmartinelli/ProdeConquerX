@@ -51,7 +51,6 @@ export default function MatchList({ currentUser, showToast }) {
   const [selectedStage, setSelectedStage] = useState('all');
   const [selectedGroup, setSelectedGroup] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
-  const [selectedDay, setSelectedDay] = useState('all');
 
   // Comparison Modal state
   const [modalMatch, setModalMatch] = useState(null);
@@ -245,22 +244,7 @@ export default function MatchList({ currentUser, showToast }) {
     if (selectedStatus === 'unpredicted' && hasPred) return false;
     if (selectedStatus === 'finished' && m.status !== 'finished') return false;
 
-    if (selectedDay !== 'all') {
-      const dateObj = parseDate(m.match_date);
-      const dayOptions = {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-        timeZone: 'America/Argentina/Buenos_Aires'
-      };
-      let dayLabel = dateObj.toLocaleDateString('es-AR', dayOptions);
-      if (dayLabel) {
-        dayLabel = dayLabel.replace(/\s+/g, ' ');
-        dayLabel = dayLabel.charAt(0).toUpperCase() + dayLabel.slice(1);
-      }
-      if (dayLabel !== selectedDay) return false;
-    }
+
 
     return true;
   });
@@ -357,28 +341,7 @@ export default function MatchList({ currentUser, showToast }) {
     }
   };
 
-  const getUniqueDays = () => {
-    const days = [];
-    matches.forEach(m => {
-      const dateObj = parseDate(m.match_date);
-      const dayOptions = {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-        timeZone: 'America/Argentina/Buenos_Aires'
-      };
-      let dayLabel = dateObj.toLocaleDateString('es-AR', dayOptions);
-      if (dayLabel) {
-        dayLabel = dayLabel.replace(/\s+/g, ' ');
-        dayLabel = dayLabel.charAt(0).toUpperCase() + dayLabel.slice(1);
-      }
-      if (!days.includes(dayLabel)) {
-        days.push(dayLabel);
-      }
-    });
-    return days;
-  };
+
 
   if (loading) {
     return (
@@ -427,16 +390,7 @@ export default function MatchList({ currentUser, showToast }) {
             </select>
           )}
 
-          <select
-            className="filter-select"
-            value={selectedDay}
-            onChange={(e) => setSelectedDay(e.target.value)}
-          >
-            <option value="all">Todos los Días</option>
-            {getUniqueDays().map(day => (
-              <option key={day} value={day}>{day}</option>
-            ))}
-          </select>
+
 
           <select
             className="filter-select"
