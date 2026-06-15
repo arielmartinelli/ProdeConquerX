@@ -27,6 +27,167 @@ export default function AdminPanel({ currentUser, showToast }) {
   const [users, setUsers] = useState([]);
   const [showUsersAdmin, setShowUsersAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+
+  const TEAM_TRANSLATIONS = {
+    'Algeria': 'Argelia',
+    'Argentina': 'Argentina',
+    'Australia': 'Australia',
+    'Austria': 'Austria',
+    'Belgium': 'Bélgica',
+    'Bosnia and Herzegovina': 'Bosnia y Herzegovina',
+    'Brazil': 'Brasil',
+    'Canada': 'Canadá',
+    'Cape Verde': 'Cabo Verde',
+    'Colombia': 'Colombia',
+    'Croatia': 'Croacia',
+    'Curaçao': 'Curazao',
+    'Czech Republic': 'Chequia',
+    'Democratic Republic of the Congo': 'República Democrática del Congo',
+    'Ecuador': 'Ecuador',
+    'Egypt': 'Egipto',
+    'England': 'Inglaterra',
+    'France': 'Francia',
+    'Germany': 'Alemania',
+    'Ghana': 'Ghana',
+    'Haiti': 'Haití',
+    'Iran': 'Irán',
+    'Iraq': 'Irak',
+    'Ivory Coast': 'Costa de Marfil',
+    'Japan': 'Japón',
+    'Jordan': 'Jordania',
+    'Mexico': 'México',
+    'Morocco': 'Marruecos',
+    'Netherlands': 'Países Bajos',
+    'New Zealand': 'Nueva Zelanda',
+    'Norway': 'Noruega',
+    'Panama': 'Panamá',
+    'Paraguay': 'Paraguay',
+    'Portugal': 'Portugal',
+    'Qatar': 'Qatar',
+    'Saudi Arabia': 'Arabia Saudita',
+    'Scotland': 'Escocia',
+    'Senegal': 'Senegal',
+    'South Africa': 'Sudáfrica',
+    'South Korea': 'Corea del Sur',
+    'Spain': 'España',
+    'Sweden': 'Suecia',
+    'Switzerland': 'Suiza',
+    'Tunisia': 'Túnez',
+    'Turkey': 'Turquía',
+    'United States': 'Estados Unidos',
+    'Uruguay': 'Uruguay',
+    'Uzbekistan': 'Uzbekistán'
+  };
+
+  const translateLabel = (label) => {
+    if (!label) return '';
+    let trans = label;
+    trans = trans.replace(/Winner Group ([A-L])/gi, '1° Grupo $1');
+    trans = trans.replace(/Runner-up Group ([A-L])/gi, '2° Grupo $1');
+    trans = trans.replace(/3rd Group ([\w\/]+)/gi, 'Mejor 3° ($1)');
+    trans = trans.replace(/Winner Match (\d+)/gi, 'Ganador Partido $1');
+    trans = trans.replace(/Loser Match (\d+)/gi, 'Perdedor Partido $1');
+    return trans;
+  };
+
+  const getStadiumOffset = (stadiumId) => {
+    const id = parseInt(stadiumId);
+    if ([1, 2].includes(id)) return '-06:00'; // Mexico City, Guadalajara
+    if ([3, 4, 5, 6].includes(id)) return '-05:00'; // Monterrey, Dallas, Houston, Kansas City
+    if ([7, 8, 9, 10, 11, 12].includes(id)) return '-04:00'; // Eastern Time
+    if ([13, 14, 15, 16].includes(id)) return '-07:00'; // Pacific Time
+    return '-05:00'; // Default
+  };
+
+  const handleApiSync = async () => {
+    setSyncing(true);
+    try {
+      showToast("Conectando con la API oficial del Mundial...", "info");
+      const res = await fetch('https://worldcup26.ir/get/games');
+      const data = await res.json();
+      const apiGames = Array.isArray(data) ? data : data.games || Object.values(data);
+
+      if (!apiGames || apiGames.length === 0) {
+        throw new Error("No se recibieron partidos de la API.");
+      }
+
+      // Fetch current matches from Supabase
+      const { data: dbMatches, error: dbErr } = await supabase
+        .from('matches')
+        .select('*');
+      if (dbErr) throw dbErr;
+
+      const updates = [];
+      let updatedCount = 0;
+
+      apiGames.forEach(g => {
+        const matchId = parseInt(g.id);
+        const dbMatch = dbMatches.find(m => m.id === matchId);
+
+        if (dbMatch) {
+          const isFinished = g.finished === 'TRUE' || g.finished === true;
+          const homeScore = isFinished ? parseInt(g.home_score) : null;
+          const awayScore = isFinished ? parseInt(g.away_score) : null;
+          const status = isFinished ? 'finished' : 'pending';
+
+          const home = g.home_team_name_en ? (TEAM_TRANSLATIONS[g.home_team_name_en] || g.home_team_name_en) : translateLabel(g.home_team_label);
+          const away = g.away_team_name_en ? (TEAM_TRANSLATIONS[g.away_team_name_en] || g.away_team_name_en) : translateLabel(g.away_team_label);
+
+          const parts = g.local_date.split(' ');
+          const dateParts = parts[0].split('/');
+          const timeParts = parts[1].split(':');
+          const month = dateParts[0];
+          const day = dateParts[1];
+          const year = dateParts[2];
+          const hour = timeParts[0];
+          const minute = timeParts[1];
+          
+          const offset = getStadiumOffset(g.stadium_id);
+          const matchDateIso = `${year}-${month}-${day}T${hour}:${minute}:00${offset}`;
+
+          const dateChanged = new Date(dbMatch.match_date).getTime() !== new Date(matchDateIso).getTime();
+          const teamsChanged = dbMatch.home_team !== home || dbMatch.away_team !== away;
+          const scoreChanged = dbMatch.home_score !== homeScore || dbMatch.away_score !== awayScore || dbMatch.status !== status;
+          const stadiumChanged = dbMatch.stadium_id !== parseInt(g.stadium_id);
+
+          if (dateChanged || teamsChanged || scoreChanged || stadiumChanged) {
+            updates.push({
+              id: matchId,
+              home_team: home,
+              away_team: away,
+              group_name: g.type === 'group' ? g.group : null,
+              match_date: matchDateIso,
+              stage: dbMatch.stage,
+              home_score: homeScore,
+              away_score: awayScore,
+              status: status,
+              stadium_id: parseInt(g.stadium_id)
+            });
+            updatedCount++;
+          }
+        }
+      });
+
+      if (updates.length > 0) {
+        showToast(`Actualizando ${updatedCount} partidos en Supabase...`, "info");
+        const { error: updateErr } = await supabase.from('matches').upsert(updates);
+        if (updateErr) throw updateErr;
+
+        showToast("Recalculando posiciones y standings...", "info");
+        await recalculateStandings();
+        showToast(`¡Sincronización exitosa! Se actualizaron ${updatedCount} partidos. 🏆`, "success");
+        fetchMatches(); // Reload matches list
+      } else {
+        showToast("Los partidos de la base de datos ya están sincronizados y al día.", "success");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("Error al sincronizar con la API: " + err.message, "error");
+    } finally {
+      setSyncing(false);
+    }
+  };
   
   // Track match edits locally
   const [edits, setEdits] = useState({});
@@ -346,13 +507,37 @@ export default function AdminPanel({ currentUser, showToast }) {
 
   return (
     <div>
-      <div className="page-header">
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h2>Panel de Administración</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.2rem' }}>
-            Ingresa los resultados oficiales para calcular los puntos.
+            Ingresa los resultados oficiales para calcular los puntos o sincronízalos con la API.
           </p>
         </div>
+        
+        <button
+          onClick={handleApiSync}
+          disabled={syncing}
+          className="admin-sync-btn"
+          style={{
+            background: 'var(--bg-album-cover)',
+            color: 'white',
+            border: 'none',
+            borderRadius: 'var(--border-radius-sm)',
+            padding: '10px 18px',
+            fontSize: '0.9rem',
+            fontWeight: '800',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            boxShadow: 'var(--shadow-sm)',
+            transition: 'all 0.2s ease',
+            textTransform: 'uppercase'
+          }}
+        >
+          {syncing ? '🔄 Sincronizando...' : '🔄 Sincronizar con API'}
+        </button>
 
         <div className="filters-wrapper">
           <select 

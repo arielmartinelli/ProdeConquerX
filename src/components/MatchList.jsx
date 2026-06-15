@@ -10,6 +10,63 @@ export default function MatchList({ currentUser, showToast }) {
   const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const STADIUM_NAMES = {
+    1: "Estadio Azteca (Ciudad de México)",
+    2: "Estadio Akron (Guadalajara)",
+    3: "Estadio Monterrey (Monterrey)",
+    4: "AT&T Stadium (Dallas)",
+    5: "NRG Stadium (Houston)",
+    6: "Estadio de Kansas City (Kansas City)",
+    7: "Estadio de Atlanta (Atlanta)",
+    8: "Estadio de Miami (Miami)",
+    9: "Estadio de Boston (Boston)",
+    10: "Estadio de Filadelfia (Filadelfia)",
+    11: "Estadio de Nueva York/Nueva Jersey",
+    12: "Estadio de Toronto (Toronto)",
+    13: "BC Place (Vancouver)",
+    14: "Lumen Field (Seattle)",
+    15: "Levi's Stadium (San Francisco)",
+    16: "SoFi Stadium (Los Angeles)"
+  };
+
+  const getStadiumName = (stadiumId) => {
+    return STADIUM_NAMES[stadiumId] || "Estadio del Mundial";
+  };
+
+  const getCountdownText = (matchKickoffTime) => {
+    const oneHourInMs = 1 * 60 * 60 * 1000;
+    const diff = (matchKickoffTime - oneHourInMs) - now;
+    if (diff <= 0) return 'Cerrando apuestas...';
+
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    const pad = (num) => String(num).padStart(2, '0');
+    return `⏳ Cierra en: ${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
+  };
+
+  const getMatchHour = (dateStr) => {
+    try {
+      const d = parseDate(dateStr);
+      return d.toLocaleTimeString('es-AR', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'America/Argentina/Buenos_Aires'
+      }) + ' hs';
+    } catch (e) {
+      return 'vs';
+    }
+  };
   
   // Filter states
   const [selectedStage, setSelectedStage] = useState('all');
@@ -106,15 +163,15 @@ export default function MatchList({ currentUser, showToast }) {
     const toUpsert = [];
     const toDelete = [];
 
-    const now = new Date().getTime();
-    const fourHoursInMs = 4 * 60 * 60 * 1000;
+    const nowTime = new Date().getTime();
+    const oneHourInMs = 1 * 60 * 60 * 1000;
 
-    // Get current pending match IDs that are not manually locked and not within 4 hours of kickoff
+    // Get current pending match IDs that are not manually locked and not within 1 hour of kickoff
     const pendingMatchIds = new Set(
       matches
         .filter(m => {
           const matchKickoff = new Date(m.match_date).getTime();
-          const isTimeLocked = now >= (matchKickoff - fourHoursInMs);
+          const isTimeLocked = nowTime >= (matchKickoff - oneHourInMs);
           return m.status === 'pending' && !m.is_locked && !isTimeLocked;
         })
         .map(m => m.id)
@@ -343,120 +400,147 @@ export default function MatchList({ currentUser, showToast }) {
         </div>
       </div>
 
-      {/* Match Grid */}
+      {/* Match Layout Grouped by Day */}
       {filteredMatches.length === 0 ? (
         <div className="empty-state glass-panel">
           <div className="empty-state-icon">🔍</div>
           <p>No se encontraron partidos para los filtros seleccionados.</p>
         </div>
       ) : (
-        <div className="match-grid">
-          {filteredMatches.map(m => {
-            const pred = predictions[m.id] || { home: '', away: '', saved: true };
-            const isFinished = m.status === 'finished';
-            const hasScore = pred.home !== '' && pred.away !== '';
-            
-            const matchKickoff = new Date(m.match_date).getTime();
-            const now = new Date().getTime();
-            const fourHoursInMs = 4 * 60 * 60 * 1000;
-            const isTimeLocked = now >= (matchKickoff - fourHoursInMs);
-
-            const isLocked = isFinished || m.is_locked || isTimeLocked || (pred && pred.saved && hasScore);
-            
-            return (
-              <div key={m.id} className="glass-panel match-card">
-                <div className="match-card-header">
-                  <span className={`stage-badge ${m.stage}`}>
-                    {m.group_name ? `Grupo ${m.group_name}` : getStageLabel(m.stage)}
-                  </span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span className="match-date">{formatDate(m.match_date)}</span>
-                    <span className="sticker-number-badge">N° {m.id}</span>
-                  </div>
-                </div>
-
-                <div className="match-teams-row">
-                  {/* Home Team */}
-                  <div className="team-info">
-                    <div className="team-details">
-                      <span className="team-flag">{getFlag(m.home_team)}</span>
-                      <span className="team-name">{m.home_team}</span>
-                    </div>
-                    
-                    <div className="prediction-inputs">
-                      {isFinished && (
-                        <span className="score-display-real">{m.home_score}</span>
-                      )}
-                      
-                      <input
-                        type="text"
-                        className="score-input"
-                        maxLength="2"
-                        value={pred.home}
-                        disabled={isLocked}
-                        placeholder="-"
-                        onChange={(e) => handleScoreChange(m.id, 'home', e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Away Team */}
-                  <div className="team-info">
-                    <div className="team-details">
-                      <span className="team-flag">{getFlag(m.away_team)}</span>
-                      <span className="team-name">{m.away_team}</span>
-                    </div>
-                    
-                    <div className="prediction-inputs">
-                      {isFinished && (
-                        <span className="score-display-real">{m.away_score}</span>
-                      )}
-                      
-                      <input
-                        type="text"
-                        className="score-input"
-                        maxLength="2"
-                        value={pred.away}
-                        disabled={isLocked}
-                        placeholder="-"
-                        onChange={(e) => handleScoreChange(m.id, 'away', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="match-card-footer">
-                  <div className="prediction-status">
-                    {isFinished ? (
-                      getPointsBadge(m)
-                    ) : m.is_locked ? (
-                      <span className="voting-locked-badge">🔒 Votación: OFF</span>
-                    ) : isTimeLocked ? (
-                      <span className="voting-locked-badge" style={{ color: '#dc2626', borderColor: '#fca5a5', background: 'rgba(239, 68, 68, 0.05)' }}>
-                        ⏳ Límite de tiempo (4h antes)
-                      </span>
-                    ) : (
-                      <>
-                        <span className={`status-indicator ${!hasScore ? 'empty' : pred.saved ? 'saved' : 'unsaved'}`}></span>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                          {!hasScore ? 'Sin pronosticar' : pred.saved ? 'Guardado' : 'Sin guardar'}
-                        </span>
-                      </>
-                    )}
-                  </div>
-
-                  {isFinished && (
-                    <button 
-                      className="compare-grid-btn"
-                      onClick={() => openComparisonModal(m)}
-                    >
-                      Ver apuestas 🔍
-                    </button>
-                  )}
-                </div>
+        <div className="daily-groups-wrapper" style={{ marginTop: '1.5rem', marginBottom: '3rem' }}>
+          {Object.entries(
+            filteredMatches.reduce((groups, m) => {
+              const dateObj = parseDate(m.match_date);
+              const dayOptions = {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+                timeZone: 'America/Argentina/Buenos_Aires'
+              };
+              let dayLabel = dateObj.toLocaleDateString('es-AR', dayOptions);
+              if (dayLabel) {
+                dayLabel = dayLabel.charAt(0).toUpperCase() + dayLabel.slice(1);
+              }
+              if (!groups[dayLabel]) groups[dayLabel] = [];
+              groups[dayLabel].push(m);
+              return groups;
+            }, {})
+          ).map(([dayLabel, dayMatches]) => (
+            <div key={dayLabel} className="daily-group-section">
+              <div className="daily-group-header">
+                <span className="daily-date-text">{dayLabel}</span>
+                <span className="daily-group-link" style={{ pointerEvents: 'none' }}>Mundial 2026</span>
               </div>
-            );
-          })}
+
+              <div className="daily-matches-list">
+                {dayMatches.map(m => {
+                  const pred = predictions[m.id] || { home: '', away: '', saved: true };
+                  const isFinished = m.status === 'finished';
+                  const hasScore = pred.home !== '' && pred.away !== '';
+                  
+                  const matchKickoff = new Date(m.match_date).getTime();
+                  const oneHourInMs = 1 * 60 * 60 * 1000;
+                  const isTimeLocked = now >= (matchKickoff - oneHourInMs);
+
+                  const isLocked = isFinished || m.is_locked || isTimeLocked || (pred && pred.saved && hasScore);
+
+                  return (
+                    <div key={m.id} className={`fifa-match-row ${isFinished ? 'finished' : ''}`}>
+                      {/* Main Team vs Team block */}
+                      <div className="fifa-match-main">
+                        {/* Home Team */}
+                        <div className="fifa-team home">
+                          <span className="fifa-team-name">{m.home_team}</span>
+                          <span className="fifa-flag">{getFlag(m.home_team)}</span>
+                        </div>
+
+                        {/* Center Column: Scores or Inputs */}
+                        <div className="fifa-center-col">
+                          {isFinished ? (
+                            <div className="fifa-scores-display">
+                              <span className="fifa-score-val">{m.home_score}</span>
+                              <span className="fifa-score-divider">-</span>
+                              <span className="fifa-score-val">{m.away_score}</span>
+                            </div>
+                          ) : (
+                            <div className="fifa-inputs-display">
+                              <input
+                                type="text"
+                                className="fifa-score-input-field"
+                                maxLength="2"
+                                value={pred.home}
+                                disabled={isLocked}
+                                placeholder="-"
+                                onChange={(e) => handleScoreChange(m.id, 'home', e.target.value)}
+                              />
+                              <span className="fifa-vs-divider">
+                                {isTimeLocked ? '🔒' : getMatchHour(m.match_date)}
+                              </span>
+                              <input
+                                type="text"
+                                className="fifa-score-input-field"
+                                maxLength="2"
+                                value={pred.away}
+                                disabled={isLocked}
+                                placeholder="-"
+                                onChange={(e) => handleScoreChange(m.id, 'away', e.target.value)}
+                              />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Away Team */}
+                        <div className="fifa-team away">
+                          <span className="fifa-flag">{getFlag(m.away_team)}</span>
+                          <span className="fifa-team-name">{m.away_team}</span>
+                        </div>
+                      </div>
+
+                      {/* Subtitle Details */}
+                      <div className="fifa-match-subtitle">
+                        {m.group_name ? `Primera fase · Grupo ${m.group_name}` : getStageLabel(m.stage)} · {getStadiumName(m.stadium_id)}
+                      </div>
+
+                      {/* Card Footer Details */}
+                      <div className="fifa-match-footer">
+                        <div className="fifa-match-footer-left">
+                          {isFinished ? (
+                            getPointsBadge(m)
+                          ) : m.is_locked ? (
+                            <span className="voting-locked-badge">🔒 Votación bloqueada</span>
+                          ) : isTimeLocked ? (
+                            <span className="voting-locked-badge expired">⏳ Votación cerrada</span>
+                          ) : (
+                            <span className="voting-countdown-badge">{getCountdownText(matchKickoff)}</span>
+                          )}
+                        </div>
+
+                        <div className="fifa-match-footer-right">
+                          {isFinished && (
+                            <button 
+                              className="compare-grid-btn-small"
+                              onClick={() => openComparisonModal(m)}
+                            >
+                              Ver apuestas 🔍
+                            </button>
+                          )}
+                          {!isFinished && !isLocked && (
+                            <div className="fifa-save-status">
+                              <span className={`status-indicator ${!hasScore ? 'empty' : pred.saved ? 'saved' : 'unsaved'}`}></span>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                {!hasScore ? 'Sin pronosticar' : pred.saved ? 'Guardado' : 'Sin guardar'}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
