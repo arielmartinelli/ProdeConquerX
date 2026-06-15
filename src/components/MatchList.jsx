@@ -106,10 +106,17 @@ export default function MatchList({ currentUser, showToast }) {
     const toUpsert = [];
     const toDelete = [];
 
-    // Get current pending match IDs that are not manually locked
+    const now = new Date().getTime();
+    const fourHoursInMs = 4 * 60 * 60 * 1000;
+
+    // Get current pending match IDs that are not manually locked and not within 4 hours of kickoff
     const pendingMatchIds = new Set(
       matches
-        .filter(m => m.status === 'pending' && !m.is_locked)
+        .filter(m => {
+          const matchKickoff = new Date(m.match_date).getTime();
+          const isTimeLocked = now >= (matchKickoff - fourHoursInMs);
+          return m.status === 'pending' && !m.is_locked && !isTimeLocked;
+        })
         .map(m => m.id)
     );
 
@@ -159,7 +166,7 @@ export default function MatchList({ currentUser, showToast }) {
       fetchData();
     } catch (err) {
       console.error(err);
-      showToast("Hubo un error al guardar los pronósticos.", "error");
+      showToast(err.message || "Hubo un error al guardar los pronósticos.", "error");
     } finally {
       setSaveLoading(false);
     }
@@ -348,7 +355,13 @@ export default function MatchList({ currentUser, showToast }) {
             const pred = predictions[m.id] || { home: '', away: '', saved: true };
             const isFinished = m.status === 'finished';
             const hasScore = pred.home !== '' && pred.away !== '';
-            const isLocked = isFinished || m.is_locked || (pred && pred.saved && hasScore);
+            
+            const matchKickoff = new Date(m.match_date).getTime();
+            const now = new Date().getTime();
+            const fourHoursInMs = 4 * 60 * 60 * 1000;
+            const isTimeLocked = now >= (matchKickoff - fourHoursInMs);
+
+            const isLocked = isFinished || m.is_locked || isTimeLocked || (pred && pred.saved && hasScore);
             
             return (
               <div key={m.id} className="glass-panel match-card">
@@ -418,6 +431,10 @@ export default function MatchList({ currentUser, showToast }) {
                       getPointsBadge(m)
                     ) : m.is_locked ? (
                       <span className="voting-locked-badge">🔒 Votación: OFF</span>
+                    ) : isTimeLocked ? (
+                      <span className="voting-locked-badge" style={{ color: '#dc2626', borderColor: '#fca5a5', background: 'rgba(239, 68, 68, 0.05)' }}>
+                        ⏳ Límite de tiempo (4h antes)
+                      </span>
                     ) : (
                       <>
                         <span className={`status-indicator ${!hasScore ? 'empty' : pred.saved ? 'saved' : 'unsaved'}`}></span>
