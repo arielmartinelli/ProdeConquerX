@@ -256,6 +256,7 @@ export default function MatchList({ currentUser, showToast }) {
       };
       let dayLabel = dateObj.toLocaleDateString('es-AR', dayOptions);
       if (dayLabel) {
+        dayLabel = dayLabel.replace(/\s+/g, ' ');
         dayLabel = dayLabel.charAt(0).toUpperCase() + dayLabel.slice(1);
       }
       if (dayLabel !== selectedDay) return false;
@@ -369,6 +370,7 @@ export default function MatchList({ currentUser, showToast }) {
       };
       let dayLabel = dateObj.toLocaleDateString('es-AR', dayOptions);
       if (dayLabel) {
+        dayLabel = dayLabel.replace(/\s+/g, ' ');
         dayLabel = dayLabel.charAt(0).toUpperCase() + dayLabel.slice(1);
       }
       if (!days.includes(dayLabel)) {
@@ -469,6 +471,7 @@ export default function MatchList({ currentUser, showToast }) {
               };
               let dayLabel = dateObj.toLocaleDateString('es-AR', dayOptions);
               if (dayLabel) {
+                dayLabel = dayLabel.replace(/\s+/g, ' ');
                 dayLabel = dayLabel.charAt(0).toUpperCase() + dayLabel.slice(1);
               }
               if (!groups[dayLabel]) groups[dayLabel] = [];
